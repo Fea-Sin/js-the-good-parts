@@ -139,6 +139,107 @@ another_stooge.nickname = "Moe";
 ```
 
 原型连接只有在检索值的时候才被用到。如果我们尝试去获取对象的某个属性值，但该对象没有此属性名，
-那么JavaScript会试着从原型对象中获取属性值。如果那个
+那么JavaScript会试着从原型对象中获取属性值。如果那个原型对象也没有该属性，那么再从它的原型
+中寻找，一次类推，直到该过程最后到达终点Object.prototype。如果想要的属性完全不存在于原型链中，
+那么结果就是undefined值。这个过程称为委托。
+
+原型关系是一种动态的关系。如果我们添加一个新的属性到原型中，该属性会立即对所有基于该原型创建的
+对象可见。
+```
+stooge.profession = "actor";
+another_stooge.profession  // "actor"
+```
+
+### 反射
+
+检查对象并确定对象有什么属性是很容的事情，只要试着去检索该属性并验证取得的值。
+typeof操作符对确定属性的类型很有帮助
+```
+typeof flight.numbe    // "number"
+typeof flight.status   // "string"
+typeof flight.arrival  // "object"
+typeof flight.manifest // 'undefined'
+```
+请注意原型链中的任何属性都会产生值
+```
+typeof flight.toString    // "function"
+typeof flight.constructor // "function"
+```
+
+有两种方法去处理掉这些不需要的属性。第一个是让你的程序做检查并丢弃值为函数的属性。
+一般来说，当你想让对象在运行时动态获取自身信息时，你关注更多的是数据，而你应该
+意识到一些值可能会是函数。
+
+另一方法是使用`hasOwnproperty`方法，如果对象拥有独有的属性，它将返回true。`hasOwnproperty`
+方法不会检查原型链。
+```
+flight.hasOwnproperty('number')      // true
+flight.hasOwnproperty('constructor') // false
+```
+
+### 枚举
+
+for in 语句可用来遍历一个对象中所有属性名。该枚举过程将会列出所有的属性--包括
+函数和你可能不关心的原型中的属性，所以有必要过滤掉那些你不想要的值。最为常用的过滤器
+是`hasOwnproperty`方法，以及使用`typeof`来排除函数
+```
+var name;
+for (name in another_stooge) {
+  if (typeof another_stooge[name] !== 'function') {
+    document.writeln(name + ': ' + another_stooge[name]);
+  }
+}
+```
+属性名出现的顺序是不确定的，因此要对任何可能出现的顺序有所准备。如果你想要确保属性以特定的顺序出现，
+最好的办法就是完全避免使用for in语句，而是创建一个数组，在其中以正确的顺序包含属性名
+```
+var i;
+var properties = [
+  'first-name',
+  'middle-name',
+  'last-name',
+  'profession'
+];
+for (i = 0; i < properties.length; i++) {
+  document.writeln(properties[i] + ': ' + another_stooge[properties[i]])
+}
+```
+通过使用for而不是for in，可以得到我们想要的属性，而不用担心可能发掘出原型链中的属性，
+并且我们按正确的顺序取得了它们的值。
+
+### 删除
+
+delete运算符可以用来删除对象的属性。如果对象包含该属性，那么该属性就会被移除。它不会
+触及原型链中的任何对象。
+
+删除对象的属性可能会让来自原型链中的属性透现出来。
+
+### 减少全局变量污染
+
+JavaScript 可以很随意地定义全局变量来容纳你的应用的所有资源。遗憾的是，全局变量削弱了
+程序的灵活性，应该避免使用。
+
+最小化使用全局变量的方法之一是为你的应用只创建一个唯一的全局变量
+```
+var MYAPP = {};
+```
+
+该变量此时成了你的应用的容器
+```
+MYAPP.stooge = {
+  "first-name": "Joe",
+  "last-name": "Howard"
+};
+
+MYAPP.flight = {
+  airline: "Oceanic",
+  ...
+}
+```
+
+只要把全局性的资源都纳入一个名称空间下，你的程序与其他应用程序、组件或类库之间发生冲突的可能性
+就会显著降低。你的程序也会变得更容易阅读，因为很明显，MYAPP.stooge指向的是顶层结构。
+
+下一章，我们会看到使用闭包来进行信息隐藏的方式，它是另一种有效减少全局污染的方法。
 
 
