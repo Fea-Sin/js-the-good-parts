@@ -46,6 +46,8 @@ JavaScript就是一个丑陋的、没用的玩具。本书的目的就是要揭�
 
 [第四章 函数](./ch4/lesson1.md)
 
+[函数进阶](./ch4/lesson2.md)
+
 毒瘤
 
 [毒瘤 - 全局变量](./ch1/lesson2.md)

@@ -143,4 +143,122 @@ document.writeln(myQuo.get_status());  // 打印显示 "confused"
 
 ### Apply 调用模式
 
+因为JavaScript是一门函数式的面向对象编程语言，所以函数可以拥有方法。
+
+apply方法让我们构建一个参数数组传递给调用函数。它也允许选择this的值。apply方法接收两个参数，
+第1个是要绑定给this的值，第2个就是一个参数数组。
+```
+var array = [3, 4];
+var sum = add.apply(null, array) // sum 值是7
+```
+
+```
+// 构造一个包含status成员的对象
+var statusObject = {
+  status: 'A-OK'
+}
+
+var status = Quo.prototype.get_status.apply(statusObject); // status 是'A-OK'
+```
+
+### 参数
+
+当函数被调用时，会得到一个"免费"配送的参数，那就是arguments数组。函数通过此参数访问所有它被
+调用时传递给它的参数列表，包括那些没有被分配给函数声明定义的形式参数的多余参数。这使得编写一个
+无须指定参数个数的函数成为可能。
+```
+var sum = function() {
+  var i, sum = 0;
+  for (i = 0; i < arguments.length; i++) {
+    sum += arguments[i]
+  }
+  return sum;
+}
+document.writeln(sum(4, 8, 15, 16, 23, 42));  // 108
+```
+
+这不是一个特别有用的模式，我们将会看到如何给数组添加一个相似的方法来达到同样的效果。
+
+因为语言的一个设计错误，arguments并不是一个真正的数组，它只是一个"类似数组"（array-like）
+的对象。arguments拥有一个length属性，但它没有任何数组的方法。
+
+### 返回
+
+当一个函数被调用时，它从第一个语句开始执行，并在遇到关闭函数体的 } 时结束。然后函数把控制权
+交还给调用该函数的程序。
+
+return语句可用来使函数提前返回。当return被执行时，函数立即返回而不再执行余下的语句。
+
+一个函数总是会返回一个值。如果没有指定返回值，则返回undefined。
+
+如果函数调用时在前面加上了new前缀，且返回值不是一个对象，则返回this（该新对象）。
+
+### 异常
+
+JavaScript提供了一套异常处理机制。异常是干扰程序的正常流程的不寻常（但并非完全是出乎意料）
+的事故。当发现这样的事故时，你的程序应该抛出一个异常。
+```
+var add = function(a, b) {
+  if (typeof a !== 'number' || typeof b !== 'number') {
+    throw {
+      name: 'TypeError',
+      message: 'add needs numbers'
+    };
+    return a + b;
+  }
+}
+```
+throw语句中断函数的执行，它应该抛出一个exception对象，该对象包含一个用来识别异常类型的 name 属性
+和一个描述性的message属性。你也可以添加其他的属性。
+
+该exception对象将被传递到一个try语句的catch从句
+```
+var try_it = function() {
+  try {
+    add("seven");
+  } catch(e) {
+    document.writeln(e.name + ': ' + e.message);
+  }
+};
+
+try_it();
+```
+如果在try代码块内抛出了一个异常，控制权就会跳转到它的catch从句。
+
+一个try语句只会有一个捕获所有异常的catch代码块。如果你的处理手段取决于异常的类型，
+那么异常处理器必须检查异常对象的name属性来确定异常的类型。
+
+### 扩展类型的功能
+
+JavaScript允许给语言的基本类型扩充功能。我们已经看到，通过给Object.prototype添加
+方法，可以让该方法对所有对象都可用。这样的方式对函数、数组、字符串、数字、正则表达式和布尔值
+同样适用。
+
+举例来说，我们可以通过给Function.prototype增加方法来使得该方法对所有函数可用
+```
+Function.prototype.method = function(name, func) {
+  if (!this.prototype[name]) {
+    this.prototype[name] = func;
+  }
+  return this;
+}
+```
+
+通过给Function.prototype增加一个method方法，我们下次给对象增加方法的时候就不必键入
+prototype这几个字符，省掉一点麻烦。
+
+JavaScript没有专门的整数类型，但有时候确实只需要提取数字中的整数部分。JavaScript本身提供的
+取整方法有些丑陋。我们可以通过给Number.prototye增加一个integer方法来改善它。它会根据数字的
+正负来判断是使用Math.ceiling还是Math.floor。
+
+[实例1](jb.js)
+
+通过给基本类型增加方法，我们可以极大地提高语言的表现力。因为JavaScript原型链继承的动态本质，
+新的方法立刻被赋予到所有的对象实例上，哪怕对象实例是在方法被增加之前就创建好了。
+
+基本类型的原型是公用结构，所以在类库混用时务必小心。一个保险的做法就是只在确定没有该方法
+时才添加它。
+
+
+
 
