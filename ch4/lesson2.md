@@ -236,6 +236,111 @@ getElement('myBoxDiv')
 
 ### 柯里化
 
+柯里化，也常译为"局部套用"，是把多参数函数转换为一系列单参数函数并进行调用的技术。这项技术以
+数学家Haskell Curry（Haskell编程语言也是以该数学家命名）
+
+函数也是值，从而我们可以用有趣的方式去操作函数值。柯里化允许我们把函数与传递给它的参数相结合，
+产生出一个新的函数。
+```
+var add1 = add.curry(1);
+document.writeln(add1(6));  // 7
+```
+add1是把1传递给add函数的curry方法后创建的一个函数。add1函数把传递给它的参数的值加1。
+JavaScript并没有curry方法，但我们可以给Function.prototype扩展此功能
+```
+Function.method('curry', function() {
+  var args = arguments, that = this;
+  return function() {
+    return that.apply(null, args.concat(arguments));
+  }
+})
+```
+
+curry方法通过创建一个保存着原始函数和被套用的参数的闭包来工作。它返回另一个函数，该函数被调用时，
+会返回调用原始函数的结果，并传递调用curry时的参数加上当前调用的参数。它使用Array的concat方法
+连接两个参数数组。
+
+糟糕的是，就像我们先前看到的那样，arguments数组并非是一个真正的数组，所以它并没有concat方法。
+要避开这个问题，我们必须在两个arguments数组上应用数组的slice方法。这样产生出拥有concat方法
+的常规数组。
+```
+Function.method('curry', function() {
+  var slice = Array.prototype.slice,
+      args = slice.apply(arguemnts),
+      that = this;
+      return function() {
+        return that.apply(null, args.concat(slice.apply(arguments)));
+      }
+})
+```
+
+### 记忆
+
+函数可以将先前操作的结果记录在某个对象里，从而避免无谓的重复计算。这种优化被称为
+记忆（memoization）。JavaScript的对象和数组要实现这种优化是非常方便的。
+
+比如说，我们想要一个递归函数来计算Fibonacci数列。一个Fibonacci数字是之前两个
+Fibonacci数字之和。最前面的两个数字是0和1
+```
+var fibonacci = function(n) {
+  return n < 2 ? n : fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+for (var i = 0; i <= 10; i++) {
+  document.writeln('// ' + i + ': ' + fibonacci(i))
+}
+```
+这样是可以工作的，但它做了很多无谓的工作。fibonacci函数被调用了453次。我们调用了11次，
+而它自身调用了442次去计算可能已被刚计算过的值。如果我们让函数具备记忆功能，就可以显著
+地减少运算量。
+
+var fibonacci = function() {
+  var memo = [0, 1];
+  var fib = function(n) {
+    var result = memo[n];
+    if (typeof result !== 'number') {
+      result = fib(n-1) + fib(n-2);
+      memo[n] = result;
+    }
+    return result;
+  }
+  return fib;
+}();
+
+这个函数返回同样的结果，但它只被调用了29次。我们调用了它11次，它调用了自己18次
+去取得之前存储的结果。
+
+在计算机领域，记忆（memoization）是主要用于加速程序计算的一种优化技术，它使得
+函数避免重复演算之前已被处理的输入，而返回已缓存的结果。
+
+我们可以把这种技术推而广之，编写一个函数来帮助我们构造带记忆功能的函数。memoizer
+函数取得一个初始的memo数组和formula函数。它返回一个管理memo存储和在需要时调用
+formula函数的recur函数。我们把这个recur函数和它的参数传递给formula函数
+```
+var memoizer = function(memo, formula) {
+  var recur = function(n) {
+    var result = memo[n];
+    if (typeof result !== 'number') {
+      result = formula(recur, n);
+      memo[n] = result;
+    }
+    return result;
+  }
+  return recur;
+}
+```
+现在，我们用memoizer函数来定义fibonacci函数，提供其初始的memo数组和formula函数
+```
+var fibonacci = memoizer([0, 1], function(recur, n){
+  return recur(n-1) + recur[n-2];
+});
+```
+
+通过设计这种产生另一个函数的函数，极大地减少了我们的工作量。
+
+
+
+
 
 
 
