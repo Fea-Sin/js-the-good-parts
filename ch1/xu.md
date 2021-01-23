@@ -1,7 +1,7 @@
 
 ## 译者序
 
-Douglas Crockford 是一起大师。
+Douglas Crockford 是一位大师。
 
 JavaScript自身确实存在着不少瑕疵，但瑕不掩瑜。
 Crockford凭借他广博的学识和丰富的经验提炼出了JavaScript的精华子集。开发人员只要在这个子集
