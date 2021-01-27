@@ -208,3 +208,221 @@ myCat.get_name = function() {
 这是一种"差异化继承"（differential inheritance）。通过定制一个新的对象，我们指明它与所基于
 的基本对象的区别。
 
+
+### 函数化
+
+迄今为止，我们所看到的继承模式的一个弱点是没法保护隐私。对象的所有属性都是可见的。我们无法得到
+私有变量和私有函数。有时候这样没关系，但有时候却是大麻烦。遇到这些麻烦的时候，一些无知的程序员
+接受了一种伪装私有（pretend privacy）的模式。如果想构造一个私有属性，他们就给它起一个怪模怪样
+的名字，并且希望其他使用代码的用户假装看不到这些奇怪的成员。幸运的是，我们有一个更好的选择，
+那就是应用模块模式。
+
+我们从构造一个生成对象的函数开始。我们以小写字母开头来命名它，因为它并不需要使用new前缀。
+该函数包括4个步骤。
+
+1）创建一个新对象。有很多的方式去构造一个对象。它可以构造一个对象字面量，或者它可以和new
+前缀连用去调用一个构造函数，或者它可以使用Object.create方法去构造一个已经存在的对象的新实例，
+或者它可以调用任意一个会返回一个对象的函数。
+
+2）有选择地定义私有实例变量和方法。这些就是函数中通过var语句定义的普通变量。
+
+3）给这个新对象扩充方法。这些方法拥有特权去访问参数，以及在第2步中通过var语句定义的变量。
+
+4）返回那个新对象。
+
+这里是一个函数化构造器的伪代码模版
+```
+var constructor = function(spec, my) {
+  var that,
+  其他私有实例变量;
+  my = my || {};
+
+  把共享的变量和函数添加到my中;
+
+  that = 一个新对象;
+
+  添加给that的特权方法;
+
+  return that;
+}
+```
+
+spec对象包含构造器需要构造一个新实例的所有信息。spec的内容可能会被复制到私有变量中，
+或者被其他函数改变，或者方法可以在需要的时候方法spec的信息。
+
+my对象是一个为继承链中的构造器提供秘密共享的容器。my对象可以选择性地使用。如果没有传入一个my对象，
+那么会创建一个my对象。
+
+接下来，声明该对象私有的实例变量和方法。通过简单地声明变量就可以做到。构造器的变量和内部函数变成了
+该实例的私有成员。内部函数可以访问spec、my、that，以及其他私有变量。
+
+接下来，给my对象添加共享的秘密成员。这是通过赋值语句来实现的
+```
+my.member = value;
+```
+现在，我们构造了一个新对象并把它赋值给that。有很多方式可以构造一个新对象。我们可以使用对象字面量，可以用
+new运算符调用一个伪类构造器，可以在一个原型对象上使用Object.create方法，或者可以调用另一个函数化的构造器，
+传给它一个spec对象（可能就是传递给当前构造器的同一个spec对象）和my对象。my对象允许其他的构造器分享我们
+放到my中的资料。其他构造器可能也会把自己可分享的秘密成员放进my对象里，以便我们的构造器可以利用它。
+
+接下来，我们扩充that，加入组成该对象接口的特权方法。我们可以分配一个新函数成为that的成员方法。或者，
+更安全地，我们可以先把函数定义为私有方法，然后再把他们分配给that
+```
+var methodical = function() {
+  ...
+};
+that.methodical = methodical;
+```
+分两步去定义methodical的好处是，如果其他方法想要调用methodical，它可以直接调用methodical而不是
+that.methodical()。如果该实例被破坏或篡改，甚至that.methodical被替换掉了，调用methodical的方法同样
+会继续工作，因为他们私有的methodical不受该实例被修改的影响。
+
+最后，我们放回that。
+
+让我们把这个模式应用到mammal例子里。此处不需要my，所以我们先抛开它，但会使用一个spec对象。
+name和saying属性现在是完全私有的。只有通过get_name和says两个特权方法才可以访问它们。
+```
+var mammal = function(spec) {
+  var that = {};
+
+  that.get_name = function() {
+    return spec.name;
+  };
+  that.says = function() {
+    return spec.saying || '';
+  };
+
+  return that;
+}
+
+var myMammal = mammal({name: 'Herb'});
+```
+
+在伪类模式里，构造器函数Cat不得不重复构造器Mammal已经完成的工作。在函数化模式中那不再需要了，
+因为构造器Cat将会调用构造器Mammal，让Mammal去做对象创建中的大部分工作，所以Cat只需关注自身的
+差异即可
+```
+var cat = function(spec) {
+  spac.saying = spec.saying || 'meow';
+  var that = mammal(spec);
+  that.purr = function(n) {
+    var i, s = '';
+    for (i = 0; i < n; i++) {
+      if (s) {
+        s += '-';
+      }
+      s += 'r';
+    }
+    return s;
+  };
+  that.get_name = function() {
+    return that.says() + ' ' + spec.name + ' ' + that.says();
+  }
+  return that;
+};
+
+var myCat = cat({name: 'Herietta'});
+```
+
+函数化模块还给我们提供了一个处理父类方法的方法。我们会构造一个superior方法，它取得一个方法名并
+返回调用那个方法的函数。该函数会调用原来的方法，尽管属性已经变化了。
+```
+Object.method('superior', function(name) {
+  var that = this,
+      method = that[name];
+  
+  return function() {
+    return method.apply(that, arguments);
+  }
+})
+```
+让我们在coolcat上试验一下，coolcat就像cat一样，除了它有一个更酷的调用父类方法get_name方法。
+它只需要一点点的准备工作。我们会声明一个super_get_name变量，并且把调用superior方法返回的
+结果赋值给它。
+```
+var coolcat = function(spec) {
+  var that = cat(spec),
+      super_get_name = that.superior('get_name');
+      
+  that.get_name = function(n) {
+    return 'like' + super_get_name() + ' baby';
+  }
+  return that;
+}
+var myCoolCat = coolcat({name: 'Bix'});
+var name = myCoolCat.get_name();  // 'like meow Bix meow baby'
+```
+函数化模式有很大的灵活性。它相比伪类模式不仅带来的工作更少，还让我们得到更好的封装和信息隐藏，以及访问
+父类方法的能力。
+
+
+如果对象的所有状态都是私有的，那么该对象就成为一个"防伪（tamper-proof）"对象。该对象的属性可以被
+替换或删除，但该对象的完整性不会受到损害。如果我们用函数化的样式创建一个对象，并且该对象的所有方法
+都不使用this或that，那么该对象就是持久性（durable）的。一个持久性对象就是一个简单功能函数的集合。
+
+一个持久性的对象不会被入侵。访问一个持久性的对象时，除非有方法授权，否则攻击者不能访问对象的内部状态。
+
+### 部件
+
+我们可以从一套部件中把对象组装出来。例如，我们可以构造一个给任何对象添加简单事件处理特性的函数。
+它会给对象添加一个on方法、一个fire方法和一个私有的事件注册表对象
+```
+var eventuality = function(that) {
+  var registry = {};
+
+  that.fire = function(event) {
+    // 在一个对象上触发一个事件。该事件可以是一个包含事件名称的字符串，
+    // 或者是一个拥有包含事件名称的type属性的对象
+    // 通过'on'方法注册的事件处理程序中匹配事件名称的函数将被调用
+    var array,
+        func,
+        handler,
+        i,
+        type = typeof event === 'string' ? event : event.type;
+    // 如果这个事件存在一组事件处理程序，那么就遍历它们并按顺序依次执行
+    if (registry.hasOwnProperty(type)) {
+      array = registry[type];
+      for (i = 0; i < array.length; i++) {
+        handler = array[i];
+
+        // 每个处理程序包含一个方法和一组可选的参数
+        // 如果该方法是一个字符串形式的名字，那么寻找到该函数
+        func = handler.method;
+        if (typeof func === 'string') {
+          func = this[func]
+        }
+        // 调用一个处理程序。如果该条目包含参数，那么传递它们过去。否则，传递给事件对象。
+        func.apply(this, handler.parameters || [event]);
+      }
+    }
+    return this;
+  }
+  that.on = function(type, method, parameters) {
+    // 注册一个事件，构造一条处理程序条目。将它插入到处理程序数组中，
+    // 如果这种类型的事件还不存在，就构造一个
+    var handler = {
+      method: method,
+      parameters: parameters
+    }
+    if (registry.hasOwnProperty(type)) {
+      registry[type].push(handler)
+    } else {
+      registry[type] = [handler];
+    }
+    return this;
+  }
+  return that;
+}
+```
+
+我们可以在任何单独的对象上调用eventuality，授予它事件处理方法。我们也可以赶在that
+被返回前在一个构造器函数中调用它。
+```
+eventuality(that)
+```
+
+用这种方式，一个构造器函数可以从一套部件中把对象组装出来。JavaScript的弱类型在此处
+是一个巨大的优势，因为我们无须花费精力去了解对象在类型系统中的继承关系。相反，我们
+只需专注于它们的个性特征。
+
+如果我们想要eventuality访问该对象的私有状态，可以把私有成员集my传递给他。
