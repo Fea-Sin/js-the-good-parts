@@ -48,7 +48,9 @@ JavaScript就是一个丑陋的、没用的玩具。本书的目的就是要揭�
 
 [函数进阶](./ch4/lesson2.md)
 
-[继承](./ch5/lesson1.md)
+[第五章 继承](./ch5/lesson1.md)
+
+[第六章 数组](./ch6/lesson1.md)
 
 毒瘤
 
