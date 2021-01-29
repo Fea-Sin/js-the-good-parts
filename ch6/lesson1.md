@@ -75,6 +75,7 @@ numbers.push('go');
 ### 删除
 
 由于JavaScript的数组其实就是对象，所以delete运算符可以用来从数组中移除元素
+
 ```
 delete numbers[2]
 // numbers 是 ['zero', 'one', undefined, 'three', 'shi', 'go']
