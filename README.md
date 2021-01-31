@@ -54,6 +54,8 @@ JavaScript就是一个丑陋的、没用的玩具。本书的目的就是要揭�
 
 [第七章 正则表达式](./ch7/lesson1.md)
 
+[第八章 方法](./ch8/lesson1.md)
+
 毒瘤
 
 [毒瘤 - 全局变量](./ch1/lesson2.md)
