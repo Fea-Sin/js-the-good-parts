@@ -56,7 +56,9 @@ JavaScript就是一个丑陋的、没用的玩具。本书的目的就是要揭�
 
 [第八章 方法 - Array](./ch8/lesson1.md)
 
-[Function - Number]()
+[Function - Number](./ch8/lesson2.md)
+
+[Object - RegExp](./ch8/lesson3.md)
 
 毒瘤
 
