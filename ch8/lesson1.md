@@ -206,3 +206,88 @@ s.sort(by('last', by('first')));
 ```
 
 - array.splice(start, deleteCount, item...)
+
+splice方法从array中移除一个或多个元素，并用新的item替换它们。参数start是从数组array
+中移除元素的开始位置。参数deleteCount是要移除的元素个数。如果又额外的参数，那些item
+会插入到被移除元素的位置上。它返回一个包含被移除元素的数组。
+
+splice最主要的用处是从一个数组中删除元素。千万不要把splice和slice弄混了
+```
+var a = ['a', 'b', 'c']
+var r = a.splice(1, 1, 'ache', 'bug');
+// a 是 ['a', 'ache', 'bug', 'c']
+// r 是 ['b']
+```
+splice可以像这样实现
+```
+Array.method('splice', function(start, deleteCount) {
+  var max = Math.max,
+      min = Math.min,
+      delta,
+      element,
+      insertCount = max(arguments.length - 2, 0),
+      k = 0,
+      len = this.length,
+      new_len,
+      result = [],
+      shift_count;
+
+  start = start || 0;
+  if (start < 0) {
+    start +=len;
+  }
+  start = max(min(start, len), 0);
+  deleteCount = max(min(typeof deleteCount === 'number' ? deleteCount : len, len - start), 0);
+  delta = insertCount - deleteCount;
+  new_len = len + delta;
+  while(k < deleteCount) {
+    element = this[start + k];
+    if (element !== undefined) {
+      result[k] = element;
+    }
+    k += 1;
+  }
+  shift_count = len - start - deleteCount;
+  if (delta < 0) {
+    k = start + insertCount;
+    while(shift_count) {
+      this[k] = this[k - delta];
+      k += 1;
+      shift_count -= 1;
+    }
+    this.length = new_len;
+  } else if (delta > 0) {
+    k = 1;
+    while(shift_count) {
+      this[new_len - k] = this[len - k];
+      k += 1;
+      shift_count -= 1;
+    }
+    this.length = new_len;
+  }
+  for (k = 0; k < insertCount; k++) {
+    this[start + k] = arguments[k + 2];
+  }
+  return result;
+})
+```
+
+- array.unshift(item...)
+
+unshift方法像push方法一样，用于把元素添加到数组中，但它是把item插入都array的开始
+部分而不是尾部。它返回array的新的length。
+```
+var a = ['a', 'b', 'c'];
+var r = a.unshift('?', '@');
+// a 是 ['?', '@', 'a', 'b', 'c']
+// r 是 5
+```
+
+unshift可以这样实现
+```
+Array.method('unshift', function() {
+  this.splice.apply(this, [0, 0].concat(Array.prototype.slice.apply(arguments)));
+  return this.length;
+})
+```
+
