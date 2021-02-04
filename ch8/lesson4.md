@@ -80,7 +80,7 @@ replaceValue可以是一个字符串或一个函数。如果replaceValue是一�
 ```
 // 捕获括号中的3个数字
 var oldareacode = /\((\d{3})\)/g;
-var p = '(555)666-1212'.replace(oldareacode, '$-');
+var p = '(555)666-1212'.replace(oldareacode, '$1-');
 // p 是 '555-666-1212'
 ```
 
